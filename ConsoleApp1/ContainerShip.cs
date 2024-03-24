@@ -12,21 +12,41 @@
         MaxWeight = maxWeight;
     }
 
+    public Container CreateContainer(string type, double tareWeight, int height, int depth, double maxPayload,
+        bool isHazardous = false, string productType = null, double temperature = 0, double pressure = 0)
+    {
+        switch (type)
+        {
+            case "C":
+                return new RefrigeratedContainer(tareWeight, height, depth, maxPayload, productType, temperature);
+            case "L":
+                return new LiquidContainer(tareWeight, height, depth, maxPayload, isHazardous);
+            case "G":
+                return new GasContainer(tareWeight, height, depth, maxPayload, pressure);
+            default:
+                throw new ArgumentException("Unknown container type.");
+        }
+    }
+    public void LoadCargoIntoContainer(Container container, double mass)
+    {
+        container.LoadCargo(mass);
+        Console.WriteLine($"Cargo with mass {mass} was load in container: {container.SerialNumber}.");
+    }
     public void AddContainer(Container container)
     {
-        if (Containers.Count >= MaxContainerCount || CurrentWeight() + container.CargoMass > MaxWeight)
+        if (Containers.Count >= MaxContainerCount || Containers.Sum(c => c.CargoMass + container.CargoMass) > MaxWeight)
         {
-            throw new InvalidOperationException("Cannot add container: exceeds ship capacity.");
+            throw new Exception("Limit of container or weight.");
         }
-
         Containers.Add(container);
     }
-
-    public double CurrentWeight()
+    public void LoadContainers(List<Container> containersToAdd)
     {
-        return Containers.Sum(c => c.CargoMass + c.TareWeight);
+        foreach (var container in containersToAdd)
+        {
+            AddContainer(container); 
+        }
     }
-
     public bool RemoveContainer(string serialNumber)
     {
         var containerToRemove = Containers.FirstOrDefault(c => c.SerialNumber == serialNumber);
@@ -35,123 +55,56 @@
             Containers.Remove(containerToRemove);
             return true;
         }
-
         return false;
     }
-
-    public static Container CreateContainer(string type, double tareWeight, int height, int depth, double maxPayload,
-        bool isHazardous = false, string productType = null, double temperature = 0, double pressure = 0)
-    {
-        switch (type.ToLower())
-        {
-            case "refrigerated":
-                return new RefrigeratedContainer(tareWeight, height, depth, maxPayload, productType, temperature);
-            case "liquid":
-                return new LiquidContainer(tareWeight, height, depth, maxPayload, isHazardous);
-            case "gas":
-                return new GasContainer(tareWeight, height, depth, maxPayload, pressure);
-            default:
-                throw new ArgumentException("Invalid container type specified.");
-        }
-    }
-
-    public void LoadCargoIntoContainer(Container container, double mass)
-    {
-        try
-        {
-            container.LoadCargo(mass);
-            Console.WriteLine($"Loaded {mass}kg into container {container.SerialNumber}.");
-        }
-        catch (OverfillException ex)
-        {
-            Console.WriteLine($"Could not load cargo: {ex.Message}");
-        }
-    }
-
-    public void LoadContainerOntoShip(ContainerShip ship, Container container)
-    {
-        try
-        {
-            ship.AddContainer(container);
-            Console.WriteLine($"Container {container.SerialNumber} added to ship.");
-        }
-        catch (InvalidOperationException ex)
-        {
-            Console.WriteLine($"Could not add container to ship: {ex.Message}");
-        }
-    }
-
-    public void LoadContainers(List<Container> containersToAdd)
-    {
-        foreach (var container in containersToAdd)
-        {
-            if (Containers.Count >= MaxContainerCount || CurrentWeight() + container.CargoMass > MaxWeight)
-            {
-                throw new InvalidOperationException(
-                    $"Cannot add container {container.SerialNumber}: exceeds ship capacity.");
-            }
-
-            Containers.Add(container);
-        }
-    }
-
     public void UnloadContainer(string serialNumber)
     {
-        var container =
-            Containers.FirstOrDefault(c => c.SerialNumber.Equals(serialNumber, StringComparison.OrdinalIgnoreCase));
+        var container = Containers.FirstOrDefault(c => c.SerialNumber == serialNumber);
         container?.UnloadCargo();
     }
-
     public bool ReplaceContainer(string serialNumber, Container newContainer)
     {
-        int index = Containers.FindIndex(c => c.SerialNumber.Equals(serialNumber, StringComparison.OrdinalIgnoreCase));
+        int index = Containers.FindIndex(c => c.SerialNumber == serialNumber);
         if (index != -1)
         {
             Containers[index] = newContainer;
             return true;
         }
-
         return false;
     }
-
     public static bool TransferContainer(ContainerShip fromShip, ContainerShip toShip, string serialNumber)
     {
-        var container = fromShip.Containers.FirstOrDefault(c =>
-            c.SerialNumber.Equals(serialNumber, StringComparison.OrdinalIgnoreCase));
-        if (container != null && toShip.Containers.Count < toShip.MaxContainerCount &&
-            toShip.CurrentWeight() + container.CargoMass <= toShip.MaxWeight)
+        var container = fromShip.Containers.FirstOrDefault(c => c.SerialNumber == serialNumber);
+        if (container != null && toShip.Containers.Count < toShip.MaxContainerCount && toShip.Containers.Sum(c => c.CargoMass) + container.CargoMass <= toShip.MaxWeight)
         {
-            fromShip.RemoveContainer(container.SerialNumber);
+            fromShip.RemoveContainer(serialNumber);
             toShip.AddContainer(container);
             return true;
         }
-
         return false;
     }
-
     public void PrintContainerInfo(string serialNumber)
     {
-        var container =
-            Containers.FirstOrDefault(c => c.SerialNumber.Equals(serialNumber, StringComparison.OrdinalIgnoreCase));
+        var container = Containers.FirstOrDefault(c => c.SerialNumber == serialNumber);
         if (container != null)
         {
-            Console.WriteLine(
-                $"Container Serial: {container.SerialNumber}, Type: {container.GetType().Name}, Cargo Mass: {container.CargoMass}kg");
+            Console.WriteLine($"Container Serial: {container.SerialNumber}, Cargo Mass: {container.CargoMass}");
         }
         else
         {
             Console.WriteLine("Container not found.");
         }
     }
-
     public void PrintShipInfo()
     {
-        Console.WriteLine(
-            $"Ship Details: Max Speed = {MaxSpeed} knots, Max Containers = {MaxContainerCount}, Max Weight = {MaxWeight} tons");
-        Console.WriteLine("Loaded Containers:");
+        Console.WriteLine($"Ship Max Speed: {MaxSpeed} knots, Max Containers: {MaxContainerCount}, Max Weight: {MaxWeight} tons");
         foreach (var container in Containers)
         {
-            Console.WriteLine($" - Serial: {container.SerialNumber}, Cargo Mass: {container.CargoMass}kg");
+            Console.WriteLine($"Container Serial: {container.SerialNumber}, Cargo Mass: {container.CargoMass}");
         }
     }
+
 }
+
+
+  

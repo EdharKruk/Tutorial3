@@ -11,30 +11,28 @@
         Temperature = temperature;
     }
 
-    public void SetProductTypeAndTemperature(string productType, double temperature)
+    public void SetProductType(string productType)
     {
-        if (CargoMass > 0)
+        if (ProductType != null && ProductType != productType)
         {
-            throw new InvalidOperationException(
-                "Cannot change product type or temperature when the container is loaded.");
+            throw new OverfillException($"Container only for: {ProductType}.");
         }
-
+        
         ProductType = productType;
-        Temperature = temperature;
     }
 
     public override void LoadCargo(double mass)
     {
-        if (CargoMass + mass > MaxPayload)
+        if ( mass > MaxPayload)
         {
             throw new OverfillException("Loading the given mass would exceed the container's payload capacity.");
         }
 
         if (Temperature < TemperatureForProduct(ProductType))
         {
-            throw new InvalidOperationException($"Cannot load {ProductType} at current temperature {Temperature}°C.");
+            throw new OverfillException($"Cannot load {ProductType} at current temperature {Temperature}°C.");
         }
-
+        
         CargoMass += mass;
     }
 

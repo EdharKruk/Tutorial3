@@ -1,4 +1,4 @@
-﻿public static class SerialNumberGenerator
+﻿public static class SerialNumberGenerator 
 {
     private static int lastNumber = 0;
 

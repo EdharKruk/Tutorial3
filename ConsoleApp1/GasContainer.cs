@@ -13,7 +13,6 @@
         if (mass > MaxPayload)
         {
             SendHazardNotification($"Attempt to overfill gas container {SerialNumber}. Operation denied.");
-            throw new OverfillException($"Exceeds maximum payload for gas container {SerialNumber}.");
         }
         CargoMass = mass;
     }

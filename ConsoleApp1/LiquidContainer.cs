@@ -10,24 +10,16 @@
 
     public override void LoadCargo(double mass)
     {
-        double maxAllowedMass = IsHazardous ? MaxPayload * 0.5 : MaxPayload * 0.9;
-        if (mass + CargoMass > maxAllowedMass)
+        double allowedMass = IsHazardous ? MaxPayload * 0.5 : MaxPayload * 0.9;
+        if (mass > allowedMass)
         {
-            SendHazardNotification(
-                $"Attempt to exceed safe loading capacity for container {SerialNumber}. Operation denied.");
-            throw new InvalidOperationException("Exceeds allowed loading capacity.");
+            SendHazardNotification($"Attempt to load {mass}kg exceeds allowed capacity for hazardous cargo. Operation denied.");
         }
-
-        CargoMass = mass;
-    }
-
-    public override void UnloadCargo()
-    {
-        CargoMass = 0;
+        base.LoadCargo(mass);
     }
 
     public void SendHazardNotification(string message)
     {
-        Console.WriteLine($"Hazard Alert for Liquid Container {SerialNumber}: {message}");
+        Console.WriteLine($"Hazard Alert for {SerialNumber}: {message}");
     }
 }

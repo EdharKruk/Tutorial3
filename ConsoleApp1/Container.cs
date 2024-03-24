@@ -1,13 +1,13 @@
 ﻿public abstract class Container
 {
+    public string SerialNumber { get; protected set; }
     public double CargoMass { get; protected set; }
-    public int Height { get; private set; }
-    public double TareWeight { get; private set; }
-    public int Depth { get; private set; }
-    public string SerialNumber { get; private set; }
-    public double MaxPayload { get; private set; }
+    public double MaxPayload { get; protected set; }
+    public double TareWeight { get; protected set; }
+    public int Height { get; protected set; }
+    public int Depth { get; protected set; }
 
-    public Container(double tareWeight, int height, int depth, double maxPayload, string type)
+    protected Container(double tareWeight, int height, int depth, double maxPayload, string type)
     {
         TareWeight = tareWeight;
         Height = height;
@@ -15,18 +15,19 @@
         MaxPayload = maxPayload;
         SerialNumber = SerialNumberGenerator.GenerateSerialNumber(type); 
     }
-
+    
+    
     public virtual void LoadCargo(double mass)
     {
         if (mass + CargoMass > MaxPayload)
         {
-            throw new OverfillException("Loading the given mass would exceed maximum payload capacity.");
+            throw new OverfillException("Error");
         }
-        CargoMass += mass;
+        CargoMass = mass;
     }
 
     public virtual void UnloadCargo()
     {
-        this.CargoMass = 0;
+        CargoMass = 0;
     }
 }
